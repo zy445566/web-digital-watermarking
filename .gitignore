@@ -104,5 +104,4 @@ dist
 .tern-port
 
 # project
-opencv.json
 static/webpack.bundle.js
