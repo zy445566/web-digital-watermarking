@@ -104,5 +104,6 @@ dist
 .tern-port
 
 # project
+opencv.js
 static/
 test/
