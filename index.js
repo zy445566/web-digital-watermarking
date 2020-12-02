@@ -40,7 +40,7 @@ class DigitalWatermarking{
             };
         })
     }
-    static getCanvasBase64Url(canvas) {
+    static getCanvasBlobUrl(canvas) {
         // base64图片地址会发生控制台network卡慢问题
         // const dataURL = canvas.toDataURL();
         return new Promise((reslove)=>{
@@ -52,7 +52,7 @@ class DigitalWatermarking{
 
     static async transformImageUrlWithText(srcImageUrl,watermarkText,fontSize) {
         await DigitalWatermarking.loadCV(bufferToBlobUrl(opencvData.buffer.data,'text/javascript'));
-        return await DigitalWatermarking.getCanvasBase64Url(await lib.transformImageWithText(
+        return await DigitalWatermarking.getCanvasBlobUrl(await lib.transformImageWithText(
             await DigitalWatermarking.getImageElementByUrl(srcImageUrl),
             watermarkText,fontSize
         ));
@@ -61,7 +61,7 @@ class DigitalWatermarking{
     static async getTextFormImageUrl(enCodeImageUrl)
     {
         await DigitalWatermarking.loadCV(bufferToBlobUrl(opencvData.buffer.data,'text/javascript'));
-        return await DigitalWatermarking.getCanvasBase64Url(await lib.getTextFormImage(
+        return await DigitalWatermarking.getCanvasBlobUrl(await lib.getTextFormImage(
             await DigitalWatermarking.getImageElementByUrl(enCodeImageUrl)
         ));
     }
