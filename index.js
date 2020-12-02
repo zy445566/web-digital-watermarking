@@ -1,7 +1,14 @@
 const lib = require('./lib.js');
 const opencvData = require('./opencv.json');
+
+// 使用之前直接使用base64Url导致浏览器控制台network卡死，而使用BlobUrl则速度快很多
+function bufferToBlobUrl(bufferJson,type='') {
+    const fileBlob = new Blob([new Uint8Array(bufferJson)],{type});
+    return URL.createObjectURL(fileBlob);
+}
 class DigitalWatermarking{
     static loadCV(url){
+        // 由于使用了base64URL导致卡的问题
         if(DigitalWatermarking.loadedCv) {
             return Promise.resolve()
         }
@@ -34,13 +41,18 @@ class DigitalWatermarking{
         })
     }
     static getCanvasBase64Url(canvas) {
-        const dataURL = canvas.toDataURL();
-        return dataURL;
+        // base64图片地址会发生控制台network卡慢问题
+        // const dataURL = canvas.toDataURL();
+        return new Promise((reslove)=>{
+            canvas.toBlob(function(blob) {
+                return reslove(URL.createObjectURL(blob));
+            })
+        });
     }
 
     static async transformImageUrlWithText(srcImageUrl,watermarkText,fontSize) {
-        await DigitalWatermarking.loadCV(opencvData.base64url);
-        return DigitalWatermarking.getCanvasBase64Url(await lib.transformImageWithText(
+        await DigitalWatermarking.loadCV(bufferToBlobUrl(opencvData.buffer.data,'text/javascript'));
+        return await DigitalWatermarking.getCanvasBase64Url(await lib.transformImageWithText(
             await DigitalWatermarking.getImageElementByUrl(srcImageUrl),
             watermarkText,fontSize
         ));
@@ -48,8 +60,8 @@ class DigitalWatermarking{
 
     static async getTextFormImageUrl(enCodeImageUrl)
     {
-        await DigitalWatermarking.loadCV(opencvData.base64url);
-        return DigitalWatermarking.getCanvasBase64Url(await lib.getTextFormImage(
+        await DigitalWatermarking.loadCV(bufferToBlobUrl(opencvData.buffer.data,'text/javascript'));
+        return await DigitalWatermarking.getCanvasBase64Url(await lib.getTextFormImage(
             await DigitalWatermarking.getImageElementByUrl(enCodeImageUrl)
         ));
     }
