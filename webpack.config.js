@@ -7,7 +7,9 @@ module.exports = {
     filename: 'webpack.bundle.js'
   },
   devServer:{
-    contentBase: path.resolve(__dirname, 'static'),
+    static: {
+      directory: path.resolve(__dirname, 'static')
+    },
     open:true,
     port:8080
   }

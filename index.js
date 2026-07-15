@@ -1,69 +1,46 @@
-const lib = require('./lib.js');
-const opencvData = require('./opencv.json');
+'use strict';
 
-// 使用之前直接使用base64Url导致浏览器控制台network卡死，而使用BlobUrl则速度快很多
-function bufferToBlobUrl(bufferJson,type='') {
-    const fileBlob = new Blob([new Uint8Array(bufferJson)],{type});
-    return URL.createObjectURL(fileBlob);
-}
-class DigitalWatermarking{
-    static loadCV(url){
-        // 由于使用了base64URL导致卡的问题
-        if(DigitalWatermarking.loadedCv) {
-            return Promise.resolve()
-        }
-        const script = document.createElement('script');
-        script.async="async"
-        script.src = url;
-        script.type = 'text/javascript';
-        document.querySelector('body').appendChild(script);
-        return new Promise((reslove,reject)=>{
-            script.onload = function() {
-                DigitalWatermarking.loadedCv = true;
-                return reslove();
-            };
-            script.onerror = function() {
-                return reject('cv loading error:'+url);
-            };
-        })
-    }
+const lib = require('./lib.js');
+
+class DigitalWatermarking {
     static getImageElementByUrl(url) {
-        // const imgElement = document.createElement('img');
-        const imgElement = new Image();
-        imgElement.src = url;
-        return new Promise((reslove,reject)=>{
-            imgElement.onload = function() {
-                return reslove(imgElement);
+        const imageElement = new Image();
+        imageElement.crossOrigin = 'anonymous';
+
+        return new Promise((resolve, reject) => {
+            imageElement.onload = function onload() {
+                resolve(imageElement);
             };
-            imgElement.onerror = function() {
-                return reject('image loading error:'+url);
+            imageElement.onerror = function onerror() {
+                reject(new Error(`image loading error: ${url}`));
             };
-        })
-    }
-    static getCanvasBlobUrl(canvas) {
-        // base64图片地址会发生控制台network卡慢问题
-        // const dataURL = canvas.toDataURL();
-        return new Promise((reslove)=>{
-            canvas.toBlob(function(blob) {
-                return reslove(URL.createObjectURL(blob));
-            })
+            imageElement.src = url;
         });
     }
 
-    static async transformImageUrlWithText(srcImageUrl,watermarkText,fontSize) {
-        await DigitalWatermarking.loadCV(bufferToBlobUrl(opencvData.buffer.data,'text/javascript'));
-        return await DigitalWatermarking.getCanvasBlobUrl(await lib.transformImageWithText(
-            await DigitalWatermarking.getImageElementByUrl(srcImageUrl),
-            watermarkText,fontSize
-        ));
+    static getCanvasBlobUrl(canvas) {
+        return new Promise((resolve, reject) => {
+            canvas.toBlob((blob) => {
+                if (!blob) {
+                    reject(new Error('canvas encoding failed'));
+                    return;
+                }
+                resolve(URL.createObjectURL(blob));
+            }, 'image/png');
+        });
     }
 
-    static async getTextFormImageUrl(enCodeImageUrl)
-    {
-        await DigitalWatermarking.loadCV(bufferToBlobUrl(opencvData.buffer.data,'text/javascript'));
-        return await DigitalWatermarking.getCanvasBlobUrl(await lib.getTextFormImage(
-            await DigitalWatermarking.getImageElementByUrl(enCodeImageUrl)
-        ));
+    static async transformImageUrlWithText(srcImageUrl, watermarkText, fontSize) {
+        const imageElement = await DigitalWatermarking.getImageElementByUrl(srcImageUrl);
+        const canvas = await lib.transformImageWithText(imageElement, watermarkText, fontSize);
+        return DigitalWatermarking.getCanvasBlobUrl(canvas);
+    }
+
+    static async getTextFormImageUrl(encodedImageUrl) {
+        const imageElement = await DigitalWatermarking.getImageElementByUrl(encodedImageUrl);
+        const canvas = await lib.getTextFormImage(imageElement);
+        return DigitalWatermarking.getCanvasBlobUrl(canvas);
     }
 }
+
 module.exports = DigitalWatermarking;
