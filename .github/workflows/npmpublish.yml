@@ -17,7 +17,7 @@ jobs:
       - run: npm test
 
   publish-npm:
-    needs: test
+    needs: build
     runs-on: ubuntu-latest
     permissions:
       id-token: write  # Required for OIDC
