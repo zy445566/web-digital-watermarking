@@ -35,6 +35,9 @@ function writeImage(imageData) {
     if (!context) {
         throw new Error('Canvas 2D is not supported by this browser');
     }
+    // Fill canvas with white background to make transparent images visible
+    context.fillStyle = '#fff';
+    context.fillRect(0, 0, canvas.width, canvas.height);
     context.putImageData(imageData, 0, 0);
     return canvas;
 }
